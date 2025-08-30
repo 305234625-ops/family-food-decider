@@ -6,7 +6,134 @@
     <title>家庭美食决策助手</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            padding-top: 76px;
+        }
+
+        .rating {
+            unicode-bidi: bidi-override;
+            direction: ltr;
+            font-size: 1.5rem;
+        }
+
+        .rating span.star {
+            font-family: sans-serif;
+            font-weight: normal;
+            display: inline-block;
+            cursor: pointer;
+            color: #ddd;
+        }
+
+        .rating span.star.active,
+        .rating span.star:hover {
+            color: #ffc107;
+        }
+
+        .dish-card {
+            transition: transform 0.2s;
+            height: 100%;
+        }
+
+        .dish-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .dish-image {
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .menu-item {
+            background-color: #f8f9fa;
+            border-left: 4px solid #198754;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        #random-result {
+            transition: all 0.3s ease;
+        }
+
+        .category-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+
+        .btn {
+            transition: all 0.2s;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        /* 移动端优化 */
+        @media (max-width: 768px) {
+            .container {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+            
+            .dish-card .card-body {
+                padding: 1rem;
+            }
+            
+            .btn {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            
+            .modal-dialog {
+                margin: 1rem;
+            }
+        }
+
+        /* 加载动画 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .section-title {
+            border-left: 4px solid #198754;
+            padding-left: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            z-index: 1050;
+            animation: fadeIn 0.3s, fadeOut 0.5s 2.5s forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-20px); }
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-success fixed-top">
@@ -47,8 +174,8 @@
         <!-- 菜品列表部分 -->
         <section id="dishes-section" class="my-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h3>菜品列表</h3>
-                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#dishModal">
+                <h3 class="section-title">菜品列表</h3>
+                <button class="btn btn-success" id="add-dish-btn">
                     <i class="bi bi-plus-circle"></i> 添加菜品
                 </button>
             </div>
@@ -68,13 +195,16 @@
             </div>
             
             <div id="dishes-list" class="row">
-                <!-- 菜品列表将通过JavaScript动态生成 -->
+                <div class="col-12 text-center py-4">
+                    <div class="spinner-border text-success"></div>
+                    <p class="mt-2">加载中...</p>
+                </div>
             </div>
         </section>
 
         <!-- 随机选择部分 -->
-        <section id="random-section" class="my-4 py-4 bg-light">
-            <h3 class="mb-4">随机选择菜品</h3>
+        <section id="random-section" class="my-4 py-4 bg-light rounded">
+            <h3 class="section-title">随机选择菜品</h3>
             <div class="text-center">
                 <button id="random-btn" class="btn btn-primary btn-lg">
                     <i class="bi bi-shuffle"></i> 随机选择
@@ -92,10 +222,12 @@
 
         <!-- 今日菜单部分 -->
         <section id="menu-section" class="my-4">
-            <h3 class="mb-3">今日菜单</h3>
+            <h3 class="section-title">今日菜单</h3>
             <div id="today-menu" class="mb-4">
-                <!-- 今日菜单将通过JavaScript动态生成 -->
-                <p class="text-muted">暂无菜品，请从上方添加</p>
+                <div class="text-center py-3">
+                    <div class="spinner-border text-success spinner-border-sm"></div>
+                    <p class="mt-2">加载中...</p>
+                </div>
             </div>
             
             <div class="card">
@@ -104,8 +236,10 @@
                 </div>
                 <div class="card-body">
                     <div id="popular-dishes">
-                        <!-- 热门菜品将通过JavaScript动态生成 -->
-                        <p class="text-muted">暂无数据</p>
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary spinner-border-sm"></div>
+                            <p class="mt-2">加载中...</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -114,7 +248,7 @@
 
     <!-- 添加/编辑菜品的模态框 -->
     <div class="modal fade" id="dishModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="modalTitle">添加菜品</h5>
@@ -124,15 +258,16 @@
                     <form id="dish-form">
                         <input type="hidden" id="dish-id">
                         <div class="mb-3">
-                            <label for="dish-name" class="form-label">菜名</label>
+                            <label for="dish-name" class="form-label">菜名 <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="dish-name" required>
                         </div>
                         <div class="mb-3">
                             <label for="dish-image" class="form-label">图片URL</label>
-                            <input type="text" class="form-control" id="dish-image">
+                            <input type="text" class="form-control" id="dish-image" placeholder="https://example.com/image.jpg">
+                            <div class="form-text">可选，如果不提供将显示默认图片</div>
                         </div>
                         <div class="mb-3">
-                            <label for="dish-category" class="form-label">分类</label>
+                            <label for="dish-category" class="form-label">分类 <span class="text-danger">*</span></label>
                             <select class="form-select" id="dish-category" required>
                                 <option value="家常菜">家常菜</option>
                                 <option value="汤类">汤类</option>
@@ -144,7 +279,7 @@
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">推荐指数</label>
+                            <label class="form-label">推荐指数 <span class="text-danger">*</span></label>
                             <div class="rating">
                                 <span class="star" data-value="1">☆</span>
                                 <span class="star" data-value="2">☆</span>
@@ -156,11 +291,11 @@
                         </div>
                         <div class="mb-3">
                             <label for="dish-ingredients" class="form-label">制作原料（每行一个）</label>
-                            <textarea class="form-control" id="dish-ingredients" rows="3"></textarea>
+                            <textarea class="form-control" id="dish-ingredients" rows="3" placeholder="土豆&#10;胡萝卜&#10;牛肉"></textarea>
                         </div>
                         <div class="mb-3">
                             <label for="dish-steps" class="form-label">制作流程（每行一个步骤）</label>
-                            <textarea class="form-control" id="dish-steps" rows="4"></textarea>
+                            <textarea class="form-control" id="dish-steps" rows="4" placeholder="1. 准备食材&#10;2. 切块&#10;3. 炒制"></textarea>
                         </div>
                     </form>
                 </div>
@@ -174,23 +309,29 @@
 
     <!-- 菜品详情模态框 -->
     <div class="modal fade" id="detailModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="detail-title">菜品详情</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <img src="" id="detail-image" class="img-fluid rounded mb-3" alt="菜品图片">
-                    <div class="mb-2"><strong>分类:</strong> <span id="detail-category"></span></div>
-                    <div class="mb-2"><strong>推荐指数:</strong> <span id="detail-rating"></span></div>
-                    <div class="mb-2">
-                        <strong>制作原料:</strong>
-                        <ul id="detail-ingredients"></ul>
+                    <img src="" id="detail-image" class="img-fluid rounded mb-3" style="max-height: 300px; width: 100%; object-fit: cover;" alt="菜品图片">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <strong>分类:</strong> <span id="detail-category" class="badge bg-success"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>推荐指数:</strong> <span id="detail-rating"></span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <h6>制作原料:</h6>
+                        <ul id="detail-ingredients" class="list-group"></ul>
                     </div>
                     <div>
-                        <strong>制作流程:</strong>
-                        <ol id="detail-steps"></ol>
+                        <h6>制作流程:</h6>
+                        <ol id="detail-steps" class="list-group list-group-numbered"></ol>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -208,8 +349,655 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.21.0"></script>
-    <script src="app.js"></script>
+    <script>
+        // Supabase初始化
+        const SUPABASE_URL = 'https://gdhdlxnuopyargiqnwwz.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkaGRseG51b3B5YXJnaXFud3d6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1MzQ2NjUsImV4cCI6MjA3MjExMDY2NX0.0FsiUZypPMuxgn3E9Xi9F06PSEMQV1zqWQmr7YALDLo';
+
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // 全局状态
+        let dishes = [];
+        let todayMenu = [];
+        let currentDishId = null;
+        let currentRandomDish = null;
+
+        // DOM加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化评分星星
+            initStarRating();
+            
+            // 绑定事件
+            bindEvents();
+            
+            // 加载数据
+            loadData();
+        });
+
+        // 初始化评分星星
+        function initStarRating() {
+            const stars = document.querySelectorAll('.rating .star');
+            stars.forEach(star => {
+                star.addEventListener('click', function() {
+                    const value = parseInt(this.getAttribute('data-value'));
+                    setRating(value);
+                });
+            });
+            
+            // 设置默认3星
+            setRating(3);
+        }
+
+        // 设置评分
+        function setRating(value) {
+            document.getElementById('dish-rating').value = value;
+            const stars = document.querySelectorAll('.rating .star');
+            
+            stars.forEach(star => {
+                const starValue = parseInt(star.getAttribute('data-value'));
+                if (starValue <= value) {
+                    star.classList.add('active');
+                    star.textContent = '★';
+                } else {
+                    star.classList.remove('active');
+                    star.textContent = '☆';
+                }
+            });
+        }
+
+        // 绑定所有事件
+        function bindEvents() {
+            // 分类筛选事件
+            document.getElementById('categoryFilter').addEventListener('change', function() {
+                filterDishesByCategory(this.value);
+            });
+            
+            // 添加菜品按钮
+            document.getElementById('add-dish-btn').addEventListener('click', function() {
+                showDishModal();
+            });
+            
+            // 保存菜品事件
+            document.getElementById('save-dish-btn').addEventListener('click', saveDish);
+            
+            // 随机选择菜品事件
+            document.getElementById('random-btn').addEventListener('click', randomSelectDish);
+            
+            // 再次随机选择事件
+            document.getElementById('random-again-btn').addEventListener('click', randomSelectDish);
+            
+            // 添加到菜单事件
+            document.getElementById('add-to-menu-btn').addEventListener('click', addToTodayMenu);
+            
+            // 编辑菜品事件
+            document.getElementById('edit-dish-btn').addEventListener('click', function() {
+                if (currentDishId) {
+                    editDish(currentDishId);
+                }
+            });
+            
+            // 删除菜品事件
+            document.getElementById('delete-dish-btn').addEventListener('click', function() {
+                if (currentDishId) {
+                    deleteDish(currentDishId);
+                }
+            });
+            
+            // 模态框关闭时重置表单
+            const dishModal = document.getElementById('dishModal');
+            dishModal.addEventListener('hidden.bs.modal', function() {
+                document.getElementById('dish-form').reset();
+                document.getElementById('dish-id').value = '';
+                setRating(3); // 默认3星
+                document.getElementById('modalTitle').textContent = '添加菜品';
+            });
+        }
+
+        // 加载所有数据
+        function loadData() {
+            loadDishes();
+            loadTodayMenu();
+            loadPopularDishes();
+        }
+
+        // 从Supabase加载菜品数据
+        async function loadDishes() {
+            try {
+                const { data, error } = await supabase
+                    .from('dishes')
+                    .select('*')
+                    .order('name');
+                    
+                if (error) throw error;
+                
+                dishes = data;
+                renderDishes(dishes);
+            } catch (error) {
+                console.error('加载菜品错误:', error);
+                showNotification('加载菜品失败，请刷新重试', 'danger');
+                document.getElementById('dishes-list').innerHTML = '<div class="col-12"><div class="alert alert-danger">加载菜品失败，请刷新重试</div></div>';
+            }
+        }
+
+        // 渲染菜品列表
+        function renderDishes(dishesToRender) {
+            const dishesList = document.getElementById('dishes-list');
+            
+            if (dishesToRender.length === 0) {
+                dishesList.innerHTML = '<div class="col-12"><p class="text-muted text-center py-4">暂无菜品，请点击右上角添加</p></div>';
+                return;
+            }
+            
+            let html = '';
+            dishesToRender.forEach(dish => {
+                const stars = '★'.repeat(dish.rating) + '☆'.repeat(5 - dish.rating);
+                const imageUrl = dish.image_url || 'https://placehold.co/600x400?text=无图片';
+                
+                html += `
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="card dish-card">
+                            <span class="badge bg-success category-badge">${dish.category}</span>
+                            <img src="${imageUrl}" class="dish-image card-img-top" alt="${dish.name}" onerror="this.src='https://placehold.co/600x400?text=图片加载失败'">
+                            <div class="card-body">
+                                <h5 class="card-title">${dish.name}</h5>
+                                <div class="text-warning mb-2">${stars}</div>
+                                <button class="btn btn-outline-primary btn-sm view-detail" data-id="${dish.id}">查看详情</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            dishesList.innerHTML = html;
+            
+            // 绑定查看详情事件
+            const viewButtons = document.querySelectorAll('.view-detail');
+            viewButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const dishId = this.getAttribute('data-id');
+                    showDishDetail(dishId);
+                });
+            });
+        }
+
+        // 按分类筛选菜品
+        function filterDishesByCategory(category) {
+            if (category === 'all') {
+                renderDishes(dishes);
+            } else {
+                const filteredDishes = dishes.filter(dish => dish.category === category);
+                renderDishes(filteredDishes);
+            }
+        }
+
+        // 显示菜品详情
+        async function showDishDetail(dishId) {
+            try {
+                const { data, error } = await supabase
+                    .from('dishes')
+                    .select('*')
+                    .eq('id', dishId)
+                    .single();
+                    
+                if (error) throw error;
+                
+                currentDishId = dishId;
+                
+                // 更新模态框内容
+                document.getElementById('detail-title').textContent = data.name;
+                
+                const detailImage = document.getElementById('detail-image');
+                detailImage.src = data.image_url || 'https://placehold.co/600x400?text=无图片';
+                detailImage.onerror = function() {
+                    this.src = 'https://placehold.co/600x400?text=图片加载失败';
+                };
+                
+                document.getElementById('detail-category').textContent = data.category;
+                document.getElementById('detail-rating').innerHTML = '★'.repeat(data.rating) + '☆'.repeat(5 - data.rating);
+                
+                // 处理原料列表
+                const ingredientsList = document.getElementById('detail-ingredients');
+                ingredientsList.innerHTML = '';
+                
+                if (data.ingredients) {
+                    const ingredientsArray = data.ingredients.split('\n');
+                    ingredientsArray.forEach(ingredient => {
+                        if (ingredient.trim()) {
+                            const li = document.createElement('li');
+                            li.className = 'list-group-item';
+                            li.textContent = ingredient.trim();
+                            ingredientsList.appendChild(li);
+                        }
+                    });
+                }
+                
+                if (ingredientsList.children.length === 0) {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item text-muted';
+                    li.textContent = '暂无原料信息';
+                    ingredientsList.appendChild(li);
+                }
+                
+                // 处理制作步骤
+                const stepsList = document.getElementById('detail-steps');
+                stepsList.innerHTML = '';
+                
+                if (data.steps) {
+                    const stepsArray = data.steps.split('\n');
+                    stepsArray.forEach(step => {
+                        if (step.trim()) {
+                            const li = document.createElement('li');
+                            li.className = 'list-group-item';
+                            li.textContent = step.trim();
+                            stepsList.appendChild(li);
+                        }
+                    });
+                }
+                
+                if (stepsList.children.length === 0) {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item text-muted';
+                    li.textContent = '暂无制作步骤';
+                    stepsList.appendChild(li);
+                }
+                
+                // 显示详情模态框
+                const detailModal = new bootstrap.Modal(document.getElementById('detailModal'));
+                detailModal.show();
+            } catch (error) {
+                console.error('获取菜品详情错误:', error);
+                showNotification('获取菜品详情失败', 'danger');
+            }
+        }
+
+        // 显示菜品模态框
+        function showDishModal() {
+            const dishModal = new bootstrap.Modal(document.getElementById('dishModal'));
+            dishModal.show();
+        }
+
+        // 保存菜品（添加或更新）
+        async function saveDish() {
+            const id = document.getElementById('dish-id').value;
+            const name = document.getElementById('dish-name').value;
+            const imageUrl = document.getElementById('dish-image').value;
+            const category = document.getElementById('dish-category').value;
+            const rating = document.getElementById('dish-rating').value;
+            const ingredients = document.getElementById('dish-ingredients').value;
+            const steps = document.getElementById('dish-steps').value;
+            
+            if (!name) {
+                showNotification('请输入菜品名称', 'warning');
+                return;
+            }
+            
+            try {
+                // 准备菜品数据
+                const dishData = {
+                    name,
+                    image_url: imageUrl || null,
+                    category,
+                    rating: parseInt(rating),
+                    ingredients,
+                    steps,
+                    updated_at: new Date().toISOString()
+                };
+                
+                let error;
+                
+                if (id) {
+                    // 更新现有菜品
+                    const { error: updateError } = await supabase
+                        .from('dishes')
+                        .update(dishData)
+                        .eq('id', id);
+                    error = updateError;
+                } else {
+                    // 添加新菜品
+                    dishData.created_at = new Date().toISOString();
+                    const { error: insertError } = await supabase
+                        .from('dishes')
+                        .insert([dishData]);
+                    error = insertError;
+                }
+                
+                if (error) throw error;
+                
+                // 关闭模态框并重新加载数据
+                const dishModal = bootstrap.Modal.getInstance(document.getElementById('dishModal'));
+                dishModal.hide();
+                
+                showNotification(`菜品${id ? '更新' : '添加'}成功`, 'success');
+                loadDishes();
+                
+            } catch (error) {
+                console.error('保存菜品错误:', error);
+                showNotification('保存菜品失败', 'danger');
+            }
+        }
+
+        // 编辑菜品
+        async function editDish(dishId) {
+            try {
+                // 关闭详情模态框
+                const detailModal = bootstrap.Modal.getInstance(document.getElementById('detailModal'));
+                detailModal.hide();
+                
+                // 获取菜品数据
+                const { data, error } = await supabase
+                    .from('dishes')
+                    .select('*')
+                    .eq('id', dishId)
+                    .single();
+                    
+                if (error) throw error;
+                
+                // 填充表单
+                document.getElementById('dish-id').value = data.id;
+                document.getElementById('dish-name').value = data.name;
+                document.getElementById('dish-image').value = data.image_url || '';
+                document.getElementById('dish-category').value = data.category;
+                setRating(data.rating);
+                document.getElementById('dish-ingredients').value = data.ingredients || '';
+                document.getElementById('dish-steps').value = data.steps || '';
+                
+                // 更新模态框标题并显示
+                document.getElementById('modalTitle').textContent = '编辑菜品';
+                const dishModal = new bootstrap.Modal(document.getElementById('dishModal'));
+                dishModal.show();
+                
+            } catch (error) {
+                console.error('编辑菜品错误:', error);
+                showNotification('编辑菜品失败', 'danger');
+            }
+        }
+
+        // 删除菜品
+        async function deleteDish(dishId) {
+            if (!confirm('确定要删除这个菜品吗？此操作不可恢复。')) {
+                return;
+            }
+            
+            try {
+                const { error } = await supabase
+                    .from('dishes')
+                    .delete()
+                    .eq('id', dishId);
+                    
+                if (error) throw error;
+                
+                // 关闭模态框并重新加载数据
+                const detailModal = bootstrap.Modal.getInstance(document.getElementById('detailModal'));
+                detailModal.hide();
+                
+                showNotification('菜品删除成功', 'success');
+                loadDishes();
+                
+            } catch (error) {
+                console.error('删除菜品错误:', error);
+                showNotification('删除菜品失败', 'danger');
+            }
+        }
+
+        // 随机选择菜品
+        function randomSelectDish() {
+            if (dishes.length === 0) {
+                showNotification('请先添加一些菜品', 'warning');
+                return;
+            }
+            
+            // 随机选择一个菜品
+            const randomIndex = Math.floor(Math.random() * dishes.length);
+            const randomDish = dishes[randomIndex];
+            currentRandomDish = randomDish;
+            
+            // 显示随机结果
+            const stars = '★'.repeat(randomDish.rating) + '☆'.repeat(5 - randomDish.rating);
+            const imageUrl = randomDish.image_url || 'https://placehold.co/600x400?text=无图片';
+            
+            document.getElementById('random-dish').innerHTML = `
+                <div class="card">
+                    <img src="${imageUrl}" class="card-img-top" style="height: 200px; object-fit: cover;" alt="${randomDish.name}" onerror="this.src='https://placehold.co/600x400?text=图片加载失败'">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">${randomDish.name}</h5>
+                        <p class="text-muted">${randomDish.category}</p>
+                        <div class="text-warning mb-2">${stars}</div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('random-result').style.display = 'block';
+            currentDishId = randomDish.id;
+        }
+
+        // 添加到今日菜单
+        async function addToTodayMenu() {
+            if (!currentRandomDish) return;
+            
+            try {
+                // 获取当前日期（仅日期部分，忽略时间）
+                const today = new Date().toISOString().split('T')[0];
+                
+                // 检查是否已添加到今日菜单
+                const { data: existing, error: checkError } = await supabase
+                    .from('menu_records')
+                    .select('id')
+                    .eq('dish_id', currentRandomDish.id)
+                    .gte('added_date', today)
+                    .lte('added_date', today);
+                    
+                if (checkError) throw checkError;
+                
+                if (existing && existing.length > 0) {
+                    showNotification('该菜品已在今日菜单中', 'warning');
+                    return;
+                }
+                
+                // 添加到菜单记录
+                const { error } = await supabase
+                    .from('menu_records')
+                    .insert([{
+                        dish_id: currentRandomDish.id,
+                        added_date: today,
+                        created_at: new Date().toISOString()
+                    }]);
+                    
+                if (error) throw error;
+                
+                showNotification('已添加到今日菜单', 'success');
+                loadTodayMenu();
+                loadPopularDishes();
+                
+            } catch (error) {
+                console.error('添加到菜单错误:', error);
+                showNotification('添加到菜单失败', 'danger');
+            }
+        }
+
+        // 加载今日菜单
+        async function loadTodayMenu() {
+            try {
+                // 获取当前日期
+                const today = new Date().toISOString().split('T')[0];
+                
+                const { data, error } = await supabase
+                    .from('menu_records')
+                    .select(`
+                        id,
+                        dishes (
+                            id, name, category, image_url, rating
+                        )
+                    `)
+                    .gte('added_date', today)
+                    .lte('added_date', today)
+                    .order('created_at', { ascending: false });
+                    
+                if (error) throw error;
+                
+                todayMenu = data.map(record => ({
+                    menu_id: record.id,
+                    ...record.dishes
+                }));
+                
+                renderTodayMenu();
+            } catch (error) {
+                console.error('加载今日菜单错误:', error);
+                document.getElementById('today-menu').innerHTML = '<p class="text-muted">加载今日菜单失败</p>';
+            }
+        }
+
+        // 渲染今日菜单
+        function renderTodayMenu() {
+            const todayMenuElement = document.getElementById('today-menu');
+            
+            if (todayMenu.length === 0) {
+                todayMenuElement.innerHTML = '<p class="text-muted text-center py-3">今日菜单为空，请从上方添加</p>';
+                return;
+            }
+            
+            let html = '';
+            todayMenu.forEach(dish => {
+                const stars = '★'.repeat(dish.rating) + '☆'.repeat(5 - dish.rating);
+                const imageUrl = dish.image_url || 'https://placehold.co/100x100?text=无图片';
+                
+                html += `
+                    <div class="menu-item d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <img src="${imageUrl}" class="rounded me-3" width="60" height="60" style="object-fit: cover;" alt="${dish.name}" onerror="this.src='https://placehold.co/100x100?text=图片加载失败'">
+                            <div>
+                                <h6 class="mb-0">${dish.name}</h6>
+                                <small class="text-muted">${dish.category} · ${stars}</small>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger remove-from-menu" data-id="${dish.menu_id}">
+                            <i class="bi bi-x"></i>
+                        </button>
+                    </div>
+                `;
+            });
+            
+            todayMenuElement.innerHTML = html;
+            
+            // 绑定移除事件
+            const removeButtons = document.querySelectorAll('.remove-from-menu');
+            removeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const menuId = this.getAttribute('data-id');
+                    removeFromTodayMenu(menuId);
+                });
+            });
+        }
+
+        // 从今日菜单移除
+        async function removeFromTodayMenu(menuId) {
+            try {
+                const { error } = await supabase
+                    .from('menu_records')
+                    .delete()
+                    .eq('id', menuId);
+                    
+                if (error) throw error;
+                
+                showNotification('已从今日菜单移除', 'success');
+                loadTodayMenu();
+                
+            } catch (error) {
+                console.error('移除菜单项错误:', error);
+                showNotification('移除菜单项失败', 'danger');
+            }
+        }
+
+        // 加载热门菜品
+        async function loadPopularDishes() {
+            try {
+                // 使用原始SQL查询获取热门菜品
+                const { data, error } = await supabase
+                    .from('menu_records')
+                    .select(`
+                        dish_id,
+                        dishes (
+                            id, name, category, rating
+                        )
+                    `);
+                    
+                if (error) throw error;
+                
+                // 手动统计菜品出现次数
+                const dishCountMap = {};
+                data.forEach(record => {
+                    const dishId = record.dish_id;
+                    if (dishCountMap[dishId]) {
+                        dishCountMap[dishId].count++;
+                    } else {
+                        dishCountMap[dishId] = {
+                            count: 1,
+                            dish: record.dishes
+                        };
+                    }
+                });
+                
+                // 转换为数组并排序
+                const popularDishesArray = Object.values(dishCountMap)
+                    .sort((a, b) => b.count - a.count)
+                    .slice(0, 10);
+                
+                renderPopularDishes(popularDishesArray);
+            } catch (error) {
+                console.error('加载热门菜品错误:', error);
+                document.getElementById('popular-dishes').innerHTML = '<p class="text-muted">加载热门菜品失败</p>';
+            }
+        }
+
+        // 渲染热门菜品
+        function renderPopularDishes(popularDishes) {
+            const popularDishesElement = document.getElementById('popular-dishes');
+            
+            if (!popularDishes || popularDishes.length === 0) {
+                popularDishesElement.innerHTML = '<p class="text-muted text-center py-3">暂无数据</p>';
+                return;
+            }
+            
+            let html = '<ol class="list-group list-group-numbered">';
+            
+            popularDishes.forEach(item => {
+                const stars = '★'.repeat(item.dish.rating) + '☆'.repeat(5 - item.dish.rating);
+                
+                html += `
+                    <li class="list-group-item d-flex justify-content-between align-items-start">
+                        <div class="ms-2 me-auto">
+                            <div class="fw-bold">${item.dish.name}</div>
+                            <small class="text-muted">${item.dish.category} · ${stars}</small>
+                        </div>
+                        <span class="badge bg-primary rounded-pill">${item.count}次</span>
+                    </li>
+                `;
+            });
+            
+            html += '</ol>';
+            
+            popularDishesElement.innerHTML = html;
+        }
+
+        // 显示通知
+        function showNotification(message, type = 'info') {
+            // 移除现有通知
+            const existingNotifications = document.querySelectorAll('.notification');
+            existingNotifications.forEach(notification => notification.remove());
+            
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} notification`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // 3秒后自动移除
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 3000);
+        }
+    </script>
 </body>
 </html>
