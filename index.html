@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家庭美食决策助手</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-egg-fried"></i> 家庭美食决策助手
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#dishes-section">菜品列表</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#random-section">随机选择</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#menu-section">今日菜单</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5 pt-4">
+        <!-- 欢迎部分 -->
+        <div class="row my-4">
+            <div class="col-12">
+                <div class="p-4 bg-light rounded">
+                    <h2>告别"不知道吃什么"的困扰</h2>
+                    <p>管理家庭菜品，随机选择每日菜单，让饮食规划变得更简单</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 菜品列表部分 -->
+        <section id="dishes-section" class="my-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>菜品列表</h3>
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#dishModal">
+                    <i class="bi bi-plus-circle"></i> 添加菜品
+                </button>
+            </div>
+            
+            <div class="mb-3">
+                <label for="categoryFilter" class="form-label">按分类筛选</label>
+                <select class="form-select" id="categoryFilter">
+                    <option value="all">所有分类</option>
+                    <option value="家常菜">家常菜</option>
+                    <option value="汤类">汤类</option>
+                    <option value="面食">面食</option>
+                    <option value="米饭">米饭</option>
+                    <option value="早餐">早餐</option>
+                    <option value="甜品">甜品</option>
+                    <option value="其他">其他</option>
+                </select>
+            </div>
+            
+            <div id="dishes-list" class="row">
+                <!-- 菜品列表将通过JavaScript动态生成 -->
+            </div>
+        </section>
+
+        <!-- 随机选择部分 -->
+        <section id="random-section" class="my-4 py-4 bg-light">
+            <h3 class="mb-4">随机选择菜品</h3>
+            <div class="text-center">
+                <button id="random-btn" class="btn btn-primary btn-lg">
+                    <i class="bi bi-shuffle"></i> 随机选择
+                </button>
+                <div id="random-result" class="my-4 p-3 bg-white rounded shadow-sm" style="display: none;">
+                    <h4>今日推荐</h4>
+                    <div id="random-dish"></div>
+                    <div class="mt-3">
+                        <button id="add-to-menu-btn" class="btn btn-success me-2">加入今日菜单</button>
+                        <button id="random-again-btn" class="btn btn-outline-secondary">再选一次</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 今日菜单部分 -->
+        <section id="menu-section" class="my-4">
+            <h3 class="mb-3">今日菜单</h3>
+            <div id="today-menu" class="mb-4">
+                <!-- 今日菜单将通过JavaScript动态生成 -->
+                <p class="text-muted">暂无菜品，请从上方添加</p>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5>最常选择的菜品</h5>
+                </div>
+                <div class="card-body">
+                    <div id="popular-dishes">
+                        <!-- 热门菜品将通过JavaScript动态生成 -->
+                        <p class="text-muted">暂无数据</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- 添加/编辑菜品的模态框 -->
+    <div class="modal fade" id="dishModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">添加菜品</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="dish-form">
+                        <input type="hidden" id="dish-id">
+                        <div class="mb-3">
+                            <label for="dish-name" class="form-label">菜名</label>
+                            <input type="text" class="form-control" id="dish-name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dish-image" class="form-label">图片URL</label>
+                            <input type="text" class="form-control" id="dish-image">
+                        </div>
+                        <div class="mb-3">
+                            <label for="dish-category" class="form-label">分类</label>
+                            <select class="form-select" id="dish-category" required>
+                                <option value="家常菜">家常菜</option>
+                                <option value="汤类">汤类</option>
+                                <option value="面食">面食</option>
+                                <option value="米饭">米饭</option>
+                                <option value="早餐">早餐</option>
+                                <option value="甜品">甜品</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">推荐指数</label>
+                            <div class="rating">
+                                <span class="star" data-value="1">☆</span>
+                                <span class="star" data-value="2">☆</span>
+                                <span class="star" data-value="3">☆</span>
+                                <span class="star" data-value="4">☆</span>
+                                <span class="star" data-value="5">☆</span>
+                                <input type="hidden" id="dish-rating" value="3">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dish-ingredients" class="form-label">制作原料（每行一个）</label>
+                            <textarea class="form-control" id="dish-ingredients" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="dish-steps" class="form-label">制作流程（每行一个步骤）</label>
+                            <textarea class="form-control" id="dish-steps" rows="4"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="save-dish-btn">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 菜品详情模态框 -->
+    <div class="modal fade" id="detailModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detail-title">菜品详情</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <img src="" id="detail-image" class="img-fluid rounded mb-3" alt="菜品图片">
+                    <div class="mb-2"><strong>分类:</strong> <span id="detail-category"></span></div>
+                    <div class="mb-2"><strong>推荐指数:</strong> <span id="detail-rating"></span></div>
+                    <div class="mb-2">
+                        <strong>制作原料:</strong>
+                        <ul id="detail-ingredients"></ul>
+                    </div>
+                    <div>
+                        <strong>制作流程:</strong>
+                        <ol id="detail-steps"></ol>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-primary" id="edit-dish-btn">编辑</button>
+                    <button type="button" class="btn btn-danger" id="delete-dish-btn">删除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white text-center py-3 mt-5">
+        <div class="container">
+            <p>家庭美食决策助手 &copy; 2023</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.21.0"></script>
+    <script src="app.js"></script>
+</body>
+</html>
